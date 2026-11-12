@@ -134,7 +134,7 @@ with aba_prever:
             st.success("Este pedido já está nas melhores condições para os fatores avaliados.")
         else:
             fig = go.Figure(go.Bar(x=efeito.ganho_min, y=efeito.cenario, orientation="h", marker_color=VERDE,
-                                   text=[f"−{g} min" for g in efeito.ganho_min], textposition="outside"))
+                                   text=[f"−{g} min" for g in efeito.ganho_min], textposition="outside", cliponaxis=False))
             fig.update_layout(height=60 + 48 * len(efeito), margin=dict(l=0, r=80, t=10, b=0), showlegend=False,
                               xaxis=dict(title="Minutos economizados", showgrid=False), yaxis_title=None,
                               plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)")
