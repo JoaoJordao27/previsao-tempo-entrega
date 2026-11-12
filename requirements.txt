@@ -1,9 +1,8 @@
+streamlit
 pandas
 numpy
 scikit-learn
 lightgbm
-kaggle
-pytest
+plotly
 fastapi
 uvicorn
-httpx

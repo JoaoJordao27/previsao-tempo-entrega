@@ -23,7 +23,7 @@ from entrega.dados import ALVO, RAIZ, carregar, dividir_por_data
 from entrega.modelo import ATRIBUTOS, PARAMS, categorias_de, matriz
 
 COBERTURA = 0.80  # o intervalo deve conter o tempo real em 80% dos pedidos
-SAIDA_MODELO = RAIZ / "modelos" / "intervalo.joblib"
+ARQ_PONTUAL_TREINO = RAIZ / "modelos" / "pontual_treino.joblib"
 SAIDA_METRICAS = RAIZ / "resultados" / "intervalo.json"
 
 
@@ -85,7 +85,8 @@ def main() -> dict:
     cru = {"baixo": treinar_quantil(ajuste_fit, categorias, 0.1), "alto": treinar_quantil(ajuste_fit, categorias, 0.9),
            "folga_min": 0.0, "categorias": categorias}
     pacote = montar(treino, categorias)
-    pontual = joblib.load(RAIZ / "modelos" / "modelo.joblib")["modelo"].predict(x)
+    modelo_pontual = joblib.load(ARQ_PONTUAL_TREINO)["modelo"]
+    pontual = modelo_pontual.predict(x)
 
     b0, a0 = intervalo(cru, teste)
     b1, a1 = intervalo(pacote, teste, pontual)
@@ -104,9 +105,10 @@ def main() -> dict:
         },
     }
 
-    SAIDA_MODELO.parent.mkdir(exist_ok=True)
+    from entrega.servico import salvar_pacotes  # import aqui evita ciclo (servico importa este módulo)
+
     SAIDA_METRICAS.parent.mkdir(exist_ok=True)
-    joblib.dump(pacote, SAIDA_MODELO)
+    salvar_pacotes({"pontual": modelo_pontual, "intervalo": pacote})
     SAIDA_METRICAS.write_text(json.dumps(resultado, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print(f"Meta: {COBERTURA * 100:.0f}% dos pedidos dentro do intervalo · folga conformal: +{pacote['folga_min']:.2f} min\n")

@@ -89,3 +89,16 @@ def test_sem_modelo_a_api_sobe_e_responde_503():
         assert c.get("/saude").json() == {"ok": False}
         r = c.post("/prever", json=VALIDO)
         assert r.status_code == 503 and "sem modelo" in r.json()["detail"]
+
+
+def test_salvar_e_carregar_da_o_mesmo_resultado(tmp_path):
+    from entrega.servico import carregar_pacotes, prever, salvar_pacotes
+
+    df = base_sintetica(600)
+    cats = categorias_de(df)
+    original = {"pontual": treinar_modelo(df, cats), "intervalo": montar(df, cats)}
+    salvar_pacotes(original, tmp_path)
+    lido = carregar_pacotes(tmp_path)
+    pedidos = [VALIDO, dict(VALIDO, distancia_km=2, transito="Low", clima="Sunny"),
+               dict(VALIDO, cidade="Urban", nota_entregador=4.5, festival=True)]
+    assert prever(lido, pedidos) == prever(original, pedidos)

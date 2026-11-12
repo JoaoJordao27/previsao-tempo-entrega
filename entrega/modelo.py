@@ -5,7 +5,8 @@ Treino e avaliação do modelo de tempo de entrega.
 
 Compara o LightGBM com duas bases simples (se o modelo não ganha delas, não vale o esforço),
 valida por data (treina no passado, testa no futuro) e mede importância por permutação.
-Salva o modelo em modelos/modelo.joblib (fora do Git) e as métricas em resultados/metricas.json.
+Salva o modelo pontual em modelos/pontual_treino.joblib (só para o passo seguinte, fora do Git) e as
+métricas em resultados/metricas.json. Os arquivos de uso (para a API e a tela) saem de `python -m entrega.intervalo`.
 """
 
 import json
@@ -27,7 +28,7 @@ ATRIBUTOS = CATEGORICAS + NUMERICAS
 PARAMS = dict(n_estimators=600, learning_rate=0.05, num_leaves=63, random_state=27, verbose=-1)
 LIMITE_ATRASO_MIN = 5  # chegar mais de 5 min depois do previsto conta como "atraso" para o cliente
 
-SAIDA_MODELO = RAIZ / "modelos" / "modelo.joblib"
+SAIDA_MODELO = RAIZ / "modelos" / "pontual_treino.joblib"
 SAIDA_METRICAS = RAIZ / "resultados" / "metricas.json"
 
 
