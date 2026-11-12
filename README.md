@@ -2,6 +2,8 @@
 
 Modelo de machine learning que estima **quanto um pedido de delivery vai demorar, antes de ele ser feito**, e devolve não um número solto, mas um **intervalo calibrado**: "entre 21 e 41 min", em que o tempo real cai em 80% dos pedidos. Vem com API (FastAPI) e uma tela de demonstração (Streamlit).
 
+🚀 **[Experimente online](https://previsao-tempo-entrega.streamlit.app/)**
+
 ![Tela de previsão](docs/prever.png)
 
 ## Por que um intervalo, e não um número
