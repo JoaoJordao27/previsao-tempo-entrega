@@ -1,0 +1,42 @@
+{
+  "corte_treino_teste": "2022-03-29",
+  "linhas_treino": 36146,
+  "linhas_teste": 9447,
+  "modelos": {
+    "média geral": {
+      "mae_min": 7.65,
+      "rmse_min": 9.49,
+      "acerta_ate_5min_pct": 38.2,
+      "atraso_acima_5min_pct": 27.9
+    },
+    "regra por trânsito e entregas": {
+      "mae_min": 6.28,
+      "rmse_min": 7.92,
+      "acerta_ate_5min_pct": 48.3,
+      "atraso_acima_5min_pct": 25.2
+    },
+    "LightGBM": {
+      "mae_min": 3.2,
+      "rmse_min": 4.01,
+      "acerta_ate_5min_pct": 80.1,
+      "atraso_acima_5min_pct": 10.1
+    }
+  },
+  "importancia_por_permutacao_min": {
+    "clima": 2.17,
+    "transito": 2.04,
+    "distancia_km": 1.33,
+    "idade_entregador": 1.32,
+    "nota_entregador": 1.25,
+    "condicao_veiculo": 1.06,
+    "entregas_simultaneas": 0.56,
+    "festival": 0.14,
+    "hora": 0.1,
+    "cidade": 0.07,
+    "fim_de_semana": 0.0,
+    "tipo_pedido": -0.0,
+    "veiculo": -0.0,
+    "espera_coleta_min": -0.0,
+    "dia_semana": -0.01
+  }
+}
