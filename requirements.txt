@@ -4,3 +4,6 @@ scikit-learn
 lightgbm
 kaggle
 pytest
+fastapi
+uvicorn
+httpx
