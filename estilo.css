@@ -145,3 +145,7 @@ h1, h2, h3, .sg { font-family: 'Space Grotesk', Inter, sans-serif; color: var(--
 /* tabela sem grade vertical */
 .tab, .tab th, .tab td { border-left: 0 !important; border-right: 0 !important; border-top: 0 !important; }
 .tab { border: 0 !important; }
+
+.res .obs { margin: -8px 0 0; font-size: 13px; color: #A9ACB4; }
+.res .obs b { color: #fff; font-weight: 600; }
+.barras + .nota { margin-top: 22px; }

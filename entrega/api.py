@@ -54,6 +54,8 @@ class Previsao(BaseModel):
     maximo_min: int = Field(description="Valor a prometer ao cliente: só ~10% dos pedidos passam dele")
     texto: str
     cobertura_pct: int = Field(description="Em quantos % dos pedidos o tempo real cai dentro do intervalo")
+    modo: Literal["basico", "completo"] = Field(
+        description="completo = com nota, idade e condição do veículo do entregador; básico = só o que existe no pedido")
 
 
 def criar_app(carregador: Callable[[], dict] = carregar_pacotes) -> FastAPI:
@@ -69,7 +71,7 @@ def criar_app(carregador: Callable[[], dict] = carregar_pacotes) -> FastAPI:
 
     app = FastAPI(
         title="Previsão do tempo de entrega",
-        description="Estimativa do tempo de entrega com intervalo calibrado (80%).",
+        description="Estimativa do tempo de entrega com intervalo calibrado (80%), em dois modos: básico e completo.",
         version="1.0.0", lifespan=vida,
     )
 

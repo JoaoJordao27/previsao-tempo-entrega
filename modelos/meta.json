@@ -1,5 +1,4 @@
 {
-  "folga_min": 0.4089338229569286,
   "categorias": {
     "clima": [
       "Cloudy",
@@ -33,5 +32,43 @@
       "Urban"
     ]
   },
-  "lightgbm": "4.7.0"
+  "lightgbm": "4.7.0",
+  "modos": {
+    "basico": {
+      "atributos": [
+        "clima",
+        "transito",
+        "tipo_pedido",
+        "veiculo",
+        "cidade",
+        "entregas_simultaneas",
+        "festival",
+        "distancia_km",
+        "hora",
+        "dia_semana",
+        "fim_de_semana"
+      ],
+      "folga_min": -0.25
+    },
+    "completo": {
+      "atributos": [
+        "clima",
+        "transito",
+        "tipo_pedido",
+        "veiculo",
+        "cidade",
+        "idade_entregador",
+        "nota_entregador",
+        "condicao_veiculo",
+        "entregas_simultaneas",
+        "festival",
+        "distancia_km",
+        "hora",
+        "espera_coleta_min",
+        "dia_semana",
+        "fim_de_semana"
+      ],
+      "folga_min": -0.55
+    }
+  }
 }

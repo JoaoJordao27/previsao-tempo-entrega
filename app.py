@@ -55,6 +55,17 @@ def ler_json(nome: str) -> dict | None:
     return json.loads(arq.read_text(encoding="utf-8")) if arq.exists() else None
 
 
+def ganho_do_entregador() -> str:
+    """Quanto o conhecimento do entregador melhora a previsão, com os números medidos no teste."""
+    m, i = ler_json("metricas.json"), ler_json("intervalo.json")
+    if not (m and i):
+        return "Informar o entregador deixa a previsão mais precisa."
+    b, c = m["modelos"]["LightGBM (básico)"]["mae_min"], m["modelos"]["LightGBM (completo)"]["mae_min"]
+    lb, lc = i["modos"]["basico"]["calibrado"]["largura_media_min"], i["modos"]["completo"]["calibrado"]["largura_media_min"]
+    return (f"Informar nota, idade e condição do veículo do entregador reduz o erro médio de {br(b, 2)} para {br(c, 2)} min "
+            f"e a faixa de {br(lb)} para {br(lc)} min (no teste).")
+
+
 def limpar():
     for chave, valor in PADRAO.items():
         if chave != "pagina":
@@ -106,13 +117,16 @@ def resultado_html(r: dict, p: dict) -> str:
              f'{p["hora"]}h · ' + ("sem simultâneas" if n == 0 else f"{n} simultânea" + ("s" if n > 1 else ""))]
     if p["festival"]:
         chips.append("Dia de festival")
+    chips.append("Modo completo" if r["modo"] == "completo" else "Modo básico")
+    obs = ("" if r["modo"] == "completo" else
+           '<p class="obs">Sem os dados do entregador a faixa é mais larga. Abra <b>Mais detalhes</b> para informá-los.</p>')
     return (f'<div class="res"><div class="topo"><div><div class="rotulo">Tempo previsto</div>'
             f'<div class="grande">{r["minimo_min"]}<span class="sep"> – </span>{r["maximo_min"]}<span class="un"> min</span></div></div>'
             f'<div class="est"><div class="t">Melhor estimativa</div><div class="v">{r["previsao_min"]} <small>min</small></div></div></div>'
             + escala_html(r["minimo_min"], r["previsao_min"], r["maximo_min"]) +
             f'<div class="dica">{ESCUDO}<p><strong>Prometa {r["maximo_min"]} min ao cliente.</strong> '
             f'Só cerca de 10% dos pedidos demoram mais que isso.</p></div>'
-            f'<div class="chips">{"".join(f"<span>{c}</span>" for c in chips)}</div></div>')
+            f'<div class="chips">{"".join(f"<span>{c}</span>" for c in chips)}</div>{obs}</div>')
 
 
 def efeito_de_cada_fator(p: dict) -> list[tuple[str, str, int]]:
@@ -176,7 +190,7 @@ def pagina_prever():
                 festival = st.toggle("Dia de festival", key="festival_on")
                 st.caption("Datas com pico de demanda")
             with st.expander("Mais detalhes (opcional)"):
-                st.caption("Quanto mais informação, mais estreito o intervalo.")
+                st.caption(ganho_do_entregador())
                 nota = idade = condicao = None
                 if st.checkbox("Informar dados do entregador", key="info_ent"):
                     nota = st.slider("Nota do entregador", 1.0, 5.0, step=0.1, key="nota")
@@ -206,41 +220,55 @@ def pagina_modelo():
                 'e o que este estudo <strong>não</strong> garante.</p></div>', unsafe_allow_html=True)
     if metricas:
         linhas = "".join(
-            f'<tr class="{"dest" if nome == "LightGBM" else ""}"><td>{nome[0].upper() + nome[1:]}</td>'
+            f'<tr class="{"dest" if nome.startswith("LightGBM") else ""}"><td>{nome[0].upper() + nome[1:]}</td>'
             f'<td class="n">{br(m["mae_min"], 2)}</td><td class="n">{br(m["acerta_ate_5min_pct"])}%</td>'
             f'<td class="n">{br(m["atraso_acima_5min_pct"])}%</td></tr>' for nome, m in metricas["modelos"].items())
         n_teste = f"{metricas['linhas_teste']:,}".replace(",", ".")
         corte = "/".join(reversed(metricas["corte_treino_teste"].split("-")))
         st.markdown('<div class="card"><h2>O modelo ganha das alternativas simples?</h2>'
-                    '<p class="sub">Se não ganhasse, não valeria a complexidade.</p><div class="tab-wrap"><table class="tab"><thead><tr>'
+                    '<p class="sub">Se não ganhasse, não valeria a complexidade. O modo básico usa só o que existe quando o pedido '
+                    'é feito; o completo também conhece o entregador.</p><div class="tab-wrap"><table class="tab"><thead><tr>'
                     '<th>Modelo</th><th class="n">Erro médio (min)</th><th class="n">Acerta em até 5 min</th>'
                     f'<th class="n">Chega &gt;5 min depois</th></tr></thead><tbody>{linhas}</tbody></table></div>'
                     f'<p class="nota">Avaliado em {n_teste} pedidos de {corte} em diante, que o modelo não viu no treino.</p></div>',
                     unsafe_allow_html=True)
-        imp = sorted(metricas["importancia_por_permutacao_min"].items(), key=lambda kv: -kv[1])[:8]
-        maior = max(v for _, v in imp)
+        imp_b = sorted(metricas["importancia_por_permutacao_min"]["basico"].items(), key=lambda kv: -kv[1])[:8]
+        imp_c = metricas["importancia_por_permutacao_min"]["completo"]
+        do_entregador = sum(imp_c.get(k, 0) for k in ("idade_entregador", "nota_entregador", "condicao_veiculo"))
+        maior = max(v for _, v in imp_b)
         barras = "".join(
             f'<div class="barra"><div class="nome">{FATORES.get(k, k)}</div>'
             f'<div class="fundo ink"><i style="width:{max(v, 0) / maior * 100:.1f}%"></i></div>'
-            f'<div class="num ink">{br(v)} min</div></div>' for k, v in imp)
+            f'<div class="num ink">{br(v)} min</div></div>' for k, v in imp_b)
         st.markdown('<div class="card"><h2>O que mais pesa na previsão</h2>'
-                    '<p class="sub">Quanto o erro piora ao embaralhar cada fator (importância por permutação).</p>'
-                    f'<div class="barras">{barras}</div></div>', unsafe_allow_html=True)
+                    '<p class="sub">Quanto o erro piora ao embaralhar cada fator (importância por permutação), no modo básico.</p>'
+                    f'<div class="barras">{barras}</div>'
+                    f'<p class="nota">No modo completo, nota, idade e condição do veículo do entregador somam cerca de {br(do_entregador)} min '
+                    'de erro evitado: é o que separa os dois modos.</p></div>', unsafe_allow_html=True)
     if interv:
-        cru, cal = interv["quantis_crus"], interv["calibrado"]
+        linhas = "".join(
+            f'<tr><td>{"Básico" if modo == "basico" else "Completo"}</td>'
+            f'<td class="n">{br(m["quantis_crus_continuos"]["cobertura_pct"])}%</td>'
+            f'<td class="n">{br(m["quantis_crus_arredondados"]["cobertura_pct"])}%</td>'
+            f'<td class="n"><b>{br(m["calibrado"]["cobertura_pct"])}%</b></td>'
+            f'<td class="n">{br(m["calibrado"]["largura_media_min"])} min</td>'
+            f'<td class="n">{br(m["calibrado"]["chegou_depois_do_maximo_pct"])}%</td></tr>' for modo, m in interv["modos"].items())
         st.markdown('<div class="card"><h2>O intervalo é confiável?</h2>'
                     '<p class="sub">Percentual de pedidos em que o tempo real ficou dentro da faixa prevista. Meta: 80%.</p>'
-                    f'<div class="duo"><div class="stat"><div class="t">Sem calibração</div><div class="v">{br(cru["cobertura_pct"])}%</div></div>'
-                    f'<div class="stat dest"><div class="t">Com calibração conformal</div><div class="v">{br(cal["cobertura_pct"])}%</div>'
-                    f'<span class="d">+{br(cal["cobertura_pct"] - cru["cobertura_pct"])} p.p.</span></div></div>'
-                    '<p class="nota">O ajuste custa menos de 1 minuto de largura média.</p></div>', unsafe_allow_html=True)
+                    '<div class="tab-wrap"><table class="tab"><thead><tr><th>Modo</th><th class="n">Quantis crus</th>'
+                    '<th class="n">Crus, arredondados</th><th class="n">Calibrado</th><th class="n">Largura média</th>'
+                    f'<th class="n">Passa do máximo</th></tr></thead><tbody>{linhas}</tbody></table></div>'
+                    '<p class="nota">A regressão quantílica sozinha promete 80% e entrega 72% a 75%. Como o tempo é medido em minutos '
+                    'inteiros e a faixa mostrada também, a calibração é feita já sobre os limites arredondados. Arredondar sem '
+                    'recalibrar daria 83% a 88%: faixas mais largas do que o necessário.</p></div>', unsafe_allow_html=True)
     st.markdown('<div class="card"><h2>Limitações</h2><p class="sub">O que este estudo não garante.</p><ul class="lim">'
                 '<li>Os dados são um conjunto público do Kaggle sobre entregas na <strong>Índia, de fev a abr/2022</strong> (44 dias). '
                 '<strong>Isto não representa o iFood nem entregas no Brasil</strong>; é um estudo de método.</li>'
+                '<li>Nota, idade e condição do veículo do entregador pesam bastante, mas só existiriam depois que um entregador '
+                'fosse designado. Por isso há dois modos, cada um calibrado separadamente. Vale checar também se a nota já reflete '
+                'entregas lentas anteriores (vazamento de informação).</li>'
                 '<li>Hora do pedido e dia da semana pesam quase nada, o que é incomum em entregas reais. É um indício de que '
                 'parte dos dados é artificial, então os números absolutos não devem ser levados a sério.</li>'
-                '<li>A nota do entregador pesa bastante. Em produção seria preciso checar se ela já reflete entregas lentas '
-                'anteriores (vazamento de informação).</li>'
                 '<li>O teste cobre apenas os dias seguintes ao treino; não mede mudanças de sazonalidade ao longo de meses.</li>'
                 '<li>O modelo não usa rota nem GPS: a distância é em linha reta.</li></ul></div>', unsafe_allow_html=True)
 

@@ -15,7 +15,13 @@
       "acerta_ate_5min_pct": 48.3,
       "atraso_acima_5min_pct": 25.2
     },
-    "LightGBM": {
+    "LightGBM (básico)": {
+      "mae_min": 4.75,
+      "rmse_min": 6.09,
+      "acerta_ate_5min_pct": 60.6,
+      "atraso_acima_5min_pct": 19.1
+    },
+    "LightGBM (completo)": {
       "mae_min": 3.2,
       "rmse_min": 4.01,
       "acerta_ate_5min_pct": 80.1,
@@ -23,20 +29,35 @@
     }
   },
   "importancia_por_permutacao_min": {
-    "clima": 2.17,
-    "transito": 2.04,
-    "distancia_km": 1.33,
-    "idade_entregador": 1.32,
-    "nota_entregador": 1.25,
-    "condicao_veiculo": 1.06,
-    "entregas_simultaneas": 0.56,
-    "festival": 0.14,
-    "hora": 0.1,
-    "cidade": 0.07,
-    "fim_de_semana": 0.0,
-    "tipo_pedido": -0.0,
-    "veiculo": -0.0,
-    "espera_coleta_min": -0.0,
-    "dia_semana": -0.01
+    "basico": {
+      "transito": 1.7,
+      "clima": 1.54,
+      "distancia_km": 1.22,
+      "entregas_simultaneas": 0.71,
+      "veiculo": 0.3,
+      "festival": 0.29,
+      "cidade": 0.17,
+      "hora": 0.06,
+      "dia_semana": 0.01,
+      "tipo_pedido": 0.0,
+      "fim_de_semana": 0.0
+    },
+    "completo": {
+      "clima": 2.17,
+      "transito": 2.04,
+      "distancia_km": 1.33,
+      "idade_entregador": 1.32,
+      "nota_entregador": 1.25,
+      "condicao_veiculo": 1.06,
+      "entregas_simultaneas": 0.56,
+      "festival": 0.14,
+      "hora": 0.1,
+      "cidade": 0.07,
+      "fim_de_semana": 0.0,
+      "tipo_pedido": -0.0,
+      "veiculo": -0.0,
+      "espera_coleta_min": -0.0,
+      "dia_semana": -0.01
+    }
   }
 }

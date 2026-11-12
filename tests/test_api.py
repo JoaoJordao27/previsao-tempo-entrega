@@ -7,8 +7,8 @@ from fastapi.testclient import TestClient
 
 from entrega.api import criar_app
 from entrega.dados import ALVO
-from entrega.intervalo import montar
-from entrega.modelo import categorias_de, treinar_modelo
+from entrega.modelo import categorias_de
+from entrega.servico import treinar_pacotes
 
 VALIDO = {"distancia_km": 6.5, "transito": "High", "clima": "Stormy", "veiculo": "motorcycle",
           "tipo_pedido": "Meal", "hora": 20}
@@ -36,7 +36,7 @@ def base_sintetica(n=900) -> pd.DataFrame:
 def cliente():
     df = base_sintetica()
     cats = categorias_de(df)
-    pacotes = {"pontual": treinar_modelo(df, cats), "intervalo": montar(df, cats)}
+    pacotes = treinar_pacotes(df, cats)
     with TestClient(criar_app(lambda: pacotes)) as c:
         yield c
 
@@ -96,9 +96,23 @@ def test_salvar_e_carregar_da_o_mesmo_resultado(tmp_path):
 
     df = base_sintetica(600)
     cats = categorias_de(df)
-    original = {"pontual": treinar_modelo(df, cats), "intervalo": montar(df, cats)}
+    original = treinar_pacotes(df, cats)
     salvar_pacotes(original, tmp_path)
     lido = carregar_pacotes(tmp_path)
     pedidos = [VALIDO, dict(VALIDO, distancia_km=2, transito="Low", clima="Sunny"),
                dict(VALIDO, cidade="Urban", nota_entregador=4.5, festival=True)]
     assert prever(lido, pedidos) == prever(original, pedidos)
+
+
+def test_modo_depende_dos_dados_do_entregador(cliente):
+    basico = cliente.post("/prever", json=VALIDO).json()
+    completo = cliente.post("/prever", json=dict(VALIDO, nota_entregador=4.5, idade_entregador=30, condicao_veiculo=2)).json()
+    parcial = cliente.post("/prever", json=dict(VALIDO, nota_entregador=4.5)).json()  # falta idade e condição
+    assert basico["modo"] == "basico" and completo["modo"] == "completo" and parcial["modo"] == "basico"
+
+
+def test_limites_sao_inteiros_e_contem_a_estimativa(cliente):
+    for extra in ({}, {"nota_entregador": 4.5, "idade_entregador": 30, "condicao_veiculo": 2}):
+        d = cliente.post("/prever", json=dict(VALIDO, **extra)).json()
+        assert all(isinstance(d[k], int) for k in ("previsao_min", "minimo_min", "maximo_min"))
+        assert d["minimo_min"] >= 1
