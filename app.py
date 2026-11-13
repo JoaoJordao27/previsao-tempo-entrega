@@ -1,11 +1,12 @@
 """Tela de demonstração: escolha os dados do pedido e veja o tempo de entrega previsto, com intervalo."""
 
+import hashlib
 import json
 from pathlib import Path
 
 import streamlit as st
 
-from entrega.servico import carregar_pacotes, prever
+from entrega.servico import PASTA_MODELOS, carregar_pacotes, prever
 
 RAIZ = Path(__file__).resolve().parent
 
@@ -46,8 +47,13 @@ def br(valor: float, casas: int = 1) -> str:
 
 
 @st.cache_resource
-def modelos():
+def _carregar_modelos(chave: str):
+    """`chave` entra na chave do cache: se os arquivos dos modelos mudarem, o cache é refeito (e não serve a versão antiga)."""
     return carregar_pacotes()
+
+
+def modelos():
+    return _carregar_modelos(hashlib.md5((PASTA_MODELOS / "meta.json").read_bytes()).hexdigest())
 
 
 def ler_json(nome: str) -> dict | None:
